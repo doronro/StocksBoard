@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash",
+      "Read",
+      "Edit",
+      "Write",
+      "WebFetch",
+      "Grep",
+      "Glob",
+      "LS",
+      "MultiEdit",
+      "NotebookRead",
+      "NotebookEdit",
+      "TodoRead",
+      "TodoWrite",
+      "WebSearch",
+      "Bash(grep:*)",
+      "Bash(tail:*)",
+      "Bash(where:*)",
+      "Bash(dotnet --version:*)",
+      "Bash(dotnet new:*)",
+      "Bash(dotnet sln:*)",
+      "Bash(dotnet add:*)",
+      "Bash(dotnet build:*)",
+      "Bash(dotnet test:*)",
+      "Bash(dotnet run:*)",
+      "Bash(dotnet ef:*)",
+      "Bash(npm run build:*)",
+      "Bash(npx tsc --version)",
+      "Bash(npx tsc:*)",
+      "Bash(npm install:*)",
+      "Bash(npx vite build:*)",
+      "Bash(docker:*)",
+      "Bash(docker-compose:*)",
+      "Bash(git:*)"
+    ]
+  }
+}

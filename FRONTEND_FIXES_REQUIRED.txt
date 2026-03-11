@@ -1,0 +1,392 @@
+FRONTEND SECURITY FIXES REQUIRED
+=================================
+
+After backend CRITICAL fixes are deployed, the following frontend fixes
+must be implemented to complete the security hardening.
+
+
+HIGH PRIORITY (6-11) - FRONTEND WEBSOCKET SECURITY
+===================================================
+
+These issues require frontend implementation to work with the backend
+infrastructure that has been prepared.
+
+
+6. QA-004: WebSocket Silent Connection Failure
+   =============================================
+
+   File: src/services/websocket.ts (lines 77-91)
+   Current Issue: After 5 failed reconnection attempts, silently gives up
+
+   Required Changes:
+   ```typescript
+   export class WebSocketService {
+       private reconnectAttempts = 0;
+       private maxReconnectAttempts = 10;  // Increase from 5
+       private baseDelay = 1000;  // 1 second base delay
+
+       async reconnect() {
+           if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+               // Notify user instead of silently failing
+               this.emitEvent('connectionFailed', {
+                   message: 'WebSocket connection lost. Please refresh the page.'
+               });
+               return;
+           }
+
+           // Exponential backoff: delay = 1000 * 2^(attempt)
+           const delay = this.baseDelay * Math.pow(2, this.reconnectAttempts);
+           this.reconnectAttempts++;
+
+           setTimeout(() => this.connect(), delay);
+       }
+   }
+   ```
+
+   User Experience Impact:
+   - User sees message when connection fails permanently
+   - Exponential backoff prevents server overload
+   - Can retry up to 10 times instead of silently failing
+
+
+7. QA-012: Multiple WebSocket Connections (Resource Leak)
+   ========================================================
+
+   File: src/services/api.ts (lines 58-73)
+   Current Issue: Creates new WebSocket per subscription instead of reusing
+
+   Required Changes:
+   ```typescript
+   export class WebSocketManager {
+       private static instance: WebSocketManager;
+       private wsConnection: WebSocket | null = null;
+       private subscriberCount = 0;
+
+       static getInstance(): WebSocketManager {
+           if (!this.instance) {
+               this.instance = new WebSocketManager();
+           }
+           return this.instance;
+       }
+
+       subscribe(handler: (data: any) => void): () => void {
+           this.subscriberCount++;
+
+           // Only connect on first subscriber
+           if (this.subscriberCount === 1) {
+               this.connect();
+           }
+
+           // Add listener
+           const id = Math.random();
+           this.listeners.set(id, handler);
+
+           // Return unsubscribe function
+           return () => {
+               this.listeners.delete(id);
+               this.subscriberCount--;
+
+               // Only disconnect when last subscriber leaves
+               if (this.subscriberCount === 0) {
+                   this.disconnect();
+               }
+           };
+       }
+   }
+   ```
+
+   Performance Impact:
+   - Single WebSocket connection for all subscriptions
+   - Reduces memory usage
+   - Reduces server load
+   - Faster subscription/unsubscription
+
+
+8. SEC-015: WebSocket Connections Not Authenticated
+   ==================================================
+
+   File: src/services/websocket.ts
+   Current Issue: Users can spy on other users' real-time trading data
+
+   Required Changes:
+   ```typescript
+   export class WebSocketService {
+       private authToken: string | null = null;
+
+       setAuthToken(token: string) {
+           this.authToken = token;
+       }
+
+       async connect() {
+           // Get token from localStorage or auth context
+           const token = this.authToken || localStorage.getItem('access_token');
+
+           // Include token as query parameter
+           const wsUrl = `${WS_URL}/ws/market-data?token=${encodeURIComponent(token)}`;
+
+           try {
+               this.wsConnection = new WebSocket(wsUrl);
+
+               this.wsConnection.onopen = () => {
+                   console.log('WebSocket connected');
+               };
+
+               this.wsConnection.onerror = (event) => {
+                   if (event.code === 4001) {
+                       // Unauthorized - token invalid
+                       this.emitEvent('authFailed', {
+                           message: 'Authentication failed. Please login again.'
+                       });
+                       // Redirect to login
+                   }
+               };
+           } catch (error) {
+               console.error('WebSocket connection failed:', error);
+           }
+       }
+   }
+   ```
+
+   Security Impact:
+   - Users can only access their own trading data
+   - Invalid/expired tokens are rejected immediately
+   - Backend validates JWT on connection
+
+
+9. SEC-016: WebSocket Message Validation Missing
+   ==============================================
+
+   File: src/services/websocket.ts (lines 39-46)
+   Current Issue: Messages JSON.parse'd without validation
+
+   Required Changes:
+   ```typescript
+   // Define message schema
+   interface WebSocketMessage {
+       type: 'subscribe' | 'unsubscribe' | 'quote' | 'order_update';
+       symbol?: string;
+       data?: Record<string, unknown>;
+   }
+
+   export class WebSocketService {
+       private allowedTypes = ['subscribe', 'unsubscribe', 'quote', 'order_update'];
+
+       handleMessage(raw: string) {
+           try {
+               // Parse message
+               const msg = JSON.parse(raw);
+
+               // Validate message type
+               if (!msg.type || !this.allowedTypes.includes(msg.type)) {
+                   throw new Error(`Invalid message type: ${msg.type}`);
+               }
+
+               // Validate required fields based on type
+               if (msg.type === 'subscribe' && !msg.symbol) {
+                   throw new Error('subscribe requires symbol field');
+               }
+
+               // Process valid message
+               this.processValidMessage(msg);
+
+           } catch (error) {
+               // Emit error instead of crashing
+               this.emitEvent('messageError', {
+                   message: `Invalid message received: ${error.message}`
+               });
+               console.error('WebSocket message validation error:', error);
+           }
+       }
+
+       private processValidMessage(msg: WebSocketMessage) {
+           switch (msg.type) {
+               case 'quote':
+                   this.updateQuote(msg.data);
+                   break;
+               case 'order_update':
+                   this.updateOrder(msg.data);
+                   break;
+               // ... handle other types
+           }
+       }
+   }
+   ```
+
+   Security Impact:
+   - Prevents malformed messages from crashing app
+   - Validates message structure before processing
+   - Provides clear error feedback
+
+
+10. SEC-017: No Rate Limiting on WebSocket Messages
+    ================================================
+
+    File: src/services/websocket.ts
+    Current Issue: Users can spam messages causing DoS
+
+    Required Changes:
+    ```typescript
+    export class WebSocketService {
+        private messageRateLimiter = {
+            messageCount: 0,
+            lastResetTime: Date.now(),
+            maxMessagesPerSecond: 10
+        };
+
+        handleMessage(raw: string) {
+            // Rate limiting
+            const now = Date.now();
+            const timeSinceLastReset = now - this.messageRateLimiter.lastResetTime;
+
+            if (timeSinceLastReset >= 1000) {
+                // Reset counter every second
+                this.messageRateLimiter.messageCount = 1;
+                this.messageRateLimiter.lastResetTime = now;
+            } else {
+                this.messageRateLimiter.messageCount++;
+
+                if (this.messageRateLimiter.messageCount >
+                    this.messageRateLimiter.maxMessagesPerSecond) {
+                    // Drop message and notify
+                    this.emitEvent('rateLimitExceeded', {
+                        message: 'Too many messages. Slowing down.'
+                    });
+                    return;
+                }
+            }
+
+            // Continue with normal message processing
+            this.processMessage(raw);
+        }
+    }
+    ```
+
+    DoS Protection:
+    - Limits client-side message sending rate
+    - Works with backend rate limiting
+    - User-friendly error message
+
+
+ADDITIONAL SECURITY RECOMMENDATIONS
+====================================
+
+localStorage vs Cookies:
+- Current: Access token stored in localStorage
+- Risk: Vulnerable to XSS attacks
+- Recommendation: Use httpOnly cookies for tokens
+- Implementation:
+  ```typescript
+  // Instead of localStorage.getItem('access_token')
+  // Use cookie-based auth:
+  // - Backend sets httpOnly, Secure, SameSite cookies
+  // - Frontend gets token from cookies automatically
+  // - Prevents JavaScript from accessing tokens
+  ```
+
+CORS Configuration:
+- Ensure CORS headers properly configured
+- Only allow requests from whitelisted domains
+- Set credentials: 'include' for authenticated requests
+
+CSP Headers:
+- Implement Content Security Policy
+- Restrict WebSocket connections to same origin
+- Prevent unauthorized external connections
+
+
+IMPLEMENTATION PRIORITY
+=======================
+
+Phase 1 (Immediate):
+1. QA-004 - WebSocket reconnection with exponential backoff
+2. QA-012 - Singleton WebSocket with subscription management
+3. SEC-015 - Token validation on WebSocket connection
+
+Phase 2 (Within 1 week):
+4. SEC-016 - WebSocket message validation
+5. SEC-017 - Client-side rate limiting
+
+Phase 3 (Additional security):
+6. localStorage -> httpOnly cookies migration
+7. Enhanced CORS configuration
+8. CSP headers implementation
+
+
+TESTING CHECKLIST FOR FRONTEND
+===============================
+
+QA-004 Tests:
+[ ] WebSocket reconnection works after failure
+[ ] Exponential backoff delays increase appropriately
+[ ] User sees notification after 10 failed attempts
+[ ] Manual test: Disconnect network, verify reconnection
+
+QA-012 Tests:
+[ ] Multiple subscriptions use single connection
+[ ] Memory usage does not increase with subscriptions
+[ ] Connection closes when all subscribers unsubscribe
+[ ] Manual test: Subscribe/unsubscribe multiple times
+
+SEC-015 Tests:
+[ ] Invalid token rejected on WebSocket connection
+[ ] Valid token accepted
+[ ] User redirected to login on auth failure
+[ ] Manual test: Use expired token, verify redirect
+
+SEC-016 Tests:
+[ ] Malformed JSON doesn't crash app
+[ ] Invalid message type is rejected
+[ ] Error event emitted on invalid messages
+[ ] Manual test: Send malformed JSON via WebSocket
+
+SEC-017 Tests:
+[ ] Messages above rate limit are dropped
+[ ] User notified when rate limited
+[ ] Rate limit resets per second
+[ ] Manual test: Send 100+ messages/second, verify limiting
+
+
+BACKEND INTEGRATION POINTS
+==========================
+
+The backend has prepared the following for frontend integration:
+
+1. WebSocket Authentication:
+   - Endpoint: /ws/{client_id}?token={jwt_token}
+   - Validates JWT on connection
+   - Extracts user_id from token
+   - Rejects connections without valid token (code 4001)
+
+2. WebSocket Message Formats:
+   - subscribe: { type: 'subscribe', symbol: 'AAPL' }
+   - unsubscribe: { type: 'unsubscribe', symbol: 'AAPL' }
+   - Server sends: { type: 'quote', symbol: 'AAPL', price: 150.25, ... }
+   - Server sends: { type: 'order_update', order_id: 123, status: 'filled', ... }
+
+3. Error Responses:
+   - Connection closed with code 4001: Authentication failed
+   - Connection closed with code 4029: Rate limit exceeded
+   - Message validation errors logged server-side
+
+
+DOCUMENTATION FOR FRONTEND TEAM
+================================
+
+When implementing these fixes, ensure:
+1. Update TypeScript types for WebSocket messages
+2. Update API documentation for WebSocket endpoints
+3. Add error handling UI for connection failures
+4. Add loading states for WebSocket operations
+5. Test on mobile networks (slow connections benefit most from fixes)
+6. Monitor WebSocket connection stability in production
+7. Log WebSocket errors for debugging
+
+
+PERFORMANCE NOTES
+=================
+
+These fixes will improve:
+- Memory usage (singleton WebSocket)
+- Network bandwidth (exponential backoff)
+- User experience (reconnection feedback)
+- Security posture (message validation, rate limiting)

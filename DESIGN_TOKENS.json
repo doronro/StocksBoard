@@ -1,0 +1,413 @@
+{
+  "design_system_version": "1.0.0",
+  "last_updated": "2026-03-11",
+  "metadata": {
+    "description": "Design tokens for Stock Exchange Board Application",
+    "target_platforms": ["Web Desktop", "Tablet", "Mobile"],
+    "wcag_compliance": "WCAG 2.1 AA"
+  },
+  "colors": {
+    "light_mode": {
+      "neutral": {
+        "gray_50": "#F9FAFB",
+        "gray_100": "#F3F4F6",
+        "gray_200": "#E5E7EB",
+        "gray_300": "#D1D5DB",
+        "gray_400": "#9CA3AF",
+        "gray_500": "#6B7280",
+        "gray_600": "#4B5563",
+        "gray_700": "#374151",
+        "gray_800": "#1F2937",
+        "gray_900": "#111827"
+      },
+      "semantic": {
+        "primary": {
+          "light": "#DBEAFE",
+          "main": "#2563EB",
+          "dark": "#1D4ED8"
+        },
+        "success": {
+          "light": "#DCF6E8",
+          "main": "#16A34A",
+          "dark": "#15803D"
+        },
+        "danger": {
+          "light": "#FEE2E2",
+          "main": "#DC2626",
+          "dark": "#B91C1C"
+        },
+        "warning": {
+          "light": "#FEF3C7",
+          "main": "#F59E0B",
+          "dark": "#D97706"
+        },
+        "info": {
+          "light": "#DBEAFE",
+          "main": "#2563EB",
+          "dark": "#1D4ED8"
+        }
+      },
+      "surface": {
+        "background": "#FFFFFF",
+        "surface": "#F9FAFB",
+        "surface_elevated": "#F3F4F6",
+        "border": "#E5E7EB",
+        "border_light": "#F3F4F6"
+      },
+      "text": {
+        "primary": "#111827",
+        "secondary": "#4B5563",
+        "tertiary": "#6B7280",
+        "disabled": "#9CA3AF",
+        "inverse": "#F9FAFB"
+      }
+    },
+    "dark_mode": {
+      "neutral": {
+        "gray_50": "#F9FAFB",
+        "gray_100": "#F3F4F6",
+        "gray_200": "#E5E7EB",
+        "gray_300": "#D1D5DB",
+        "gray_400": "#9CA3AF",
+        "gray_500": "#6B7280",
+        "gray_600": "#4B5563",
+        "gray_700": "#374151",
+        "gray_800": "#1F2937",
+        "gray_900": "#111827",
+        "gray_950": "#030712"
+      },
+      "semantic": {
+        "primary": {
+          "light": "#60A5FA",
+          "main": "#3B82F6",
+          "dark": "#1D4ED8"
+        },
+        "success": {
+          "light": "#4ADE80",
+          "main": "#22C55E",
+          "dark": "#15803D"
+        },
+        "danger": {
+          "light": "#F87171",
+          "main": "#EF4444",
+          "dark": "#B91C1C"
+        },
+        "warning": {
+          "light": "#FBBF24",
+          "main": "#F59E0B",
+          "dark": "#D97706"
+        },
+        "info": {
+          "light": "#60A5FA",
+          "main": "#3B82F6",
+          "dark": "#1D4ED8"
+        }
+      },
+      "surface": {
+        "background": "#030712",
+        "surface": "#111827",
+        "surface_elevated": "#1F2937",
+        "border": "#374151",
+        "border_light": "#1F2937"
+      },
+      "text": {
+        "primary": "#F9FAFB",
+        "secondary": "#D1D5DB",
+        "tertiary": "#9CA3AF",
+        "disabled": "#6B7280",
+        "inverse": "#111827"
+      }
+    }
+  },
+  "typography": {
+    "font_families": {
+      "base": "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+      "mono": "'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', monospace"
+    },
+    "sizes": {
+      "xs": "12px",
+      "sm": "14px",
+      "base": "16px",
+      "lg": "18px",
+      "xl": "20px",
+      "2xl": "24px",
+      "3xl": "32px"
+    },
+    "weights": {
+      "regular": 400,
+      "medium": 500,
+      "semibold": 600,
+      "bold": 700
+    },
+    "line_heights": {
+      "tight": 1.2,
+      "snug": 1.375,
+      "normal": 1.5,
+      "relaxed": 1.625,
+      "loose": 2
+    },
+    "scales": {
+      "h1": {
+        "size": "32px",
+        "weight": "bold",
+        "line_height": 1.2,
+        "letter_spacing": "-0.02em"
+      },
+      "h2": {
+        "size": "24px",
+        "weight": "semibold",
+        "line_height": 1.3,
+        "letter_spacing": "-0.01em"
+      },
+      "h3": {
+        "size": "20px",
+        "weight": "semibold",
+        "line_height": 1.4,
+        "letter_spacing": 0
+      },
+      "h4": {
+        "size": "18px",
+        "weight": "semibold",
+        "line_height": 1.4,
+        "letter_spacing": 0
+      },
+      "body_lg": {
+        "size": "16px",
+        "weight": "regular",
+        "line_height": 1.5,
+        "letter_spacing": 0
+      },
+      "body_md": {
+        "size": "14px",
+        "weight": "regular",
+        "line_height": 1.5,
+        "letter_spacing": 0
+      },
+      "body_sm": {
+        "size": "12px",
+        "weight": "regular",
+        "line_height": 1.5,
+        "letter_spacing": 0
+      },
+      "label": {
+        "size": "14px",
+        "weight": "medium",
+        "line_height": 1.5,
+        "letter_spacing": 0
+      },
+      "label_sm": {
+        "size": "12px",
+        "weight": "medium",
+        "line_height": 1.5,
+        "letter_spacing": 0
+      },
+      "mono": {
+        "size": "14px",
+        "weight": "regular",
+        "line_height": 1.5,
+        "letter_spacing": 0
+      },
+      "mono_lg": {
+        "size": "24px",
+        "weight": "regular",
+        "line_height": 1.2,
+        "letter_spacing": 0
+      },
+      "mono_xl": {
+        "size": "32px",
+        "weight": "regular",
+        "line_height": 1.2,
+        "letter_spacing": 0
+      }
+    },
+    "mobile_adjustments": {
+      "h1": "20px",
+      "h2": "18px",
+      "h3": "16px",
+      "h4": "16px",
+      "body_lg": "16px",
+      "mono_lg": "18px",
+      "mono_xl": "24px"
+    }
+  },
+  "spacing": {
+    "xs": "4px",
+    "sm": "8px",
+    "md": "12px",
+    "lg": "16px",
+    "xl": "24px",
+    "2xl": "32px",
+    "3xl": "48px",
+    "4xl": "64px",
+    "grid_gutter_desktop": "16px",
+    "grid_gutter_tablet": "12px",
+    "grid_gutter_mobile": "8px",
+    "page_padding_desktop": "32px",
+    "page_padding_tablet": "24px",
+    "page_padding_mobile": "16px",
+    "section_gap_desktop": "32px",
+    "section_gap_tablet": "24px",
+    "section_gap_mobile": "16px"
+  },
+  "border_radius": {
+    "none": "0px",
+    "sm": "4px",
+    "md": "6px",
+    "lg": "8px",
+    "xl": "12px",
+    "full": "9999px",
+    "component_default": "6px",
+    "card_default": "8px"
+  },
+  "shadows": {
+    "light_mode": {
+      "subtle": "0 1px 2px rgba(0, 0, 0, 0.05)",
+      "light": "0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)",
+      "medium": "0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06)",
+      "heavy": "0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05)",
+      "xl": "0 20px 25px rgba(0, 0, 0, 0.1), 0 8px 10px rgba(0, 0, 0, 0.05)"
+    },
+    "dark_mode": {
+      "subtle": "0 1px 3px rgba(0, 0, 0, 0.3)",
+      "light": "0 4px 6px rgba(0, 0, 0, 0.4)",
+      "medium": "0 10px 15px rgba(0, 0, 0, 0.5)",
+      "heavy": "0 20px 25px rgba(0, 0, 0, 0.6)",
+      "xl": "0 25px 50px rgba(0, 0, 0, 0.7)"
+    }
+  },
+  "transitions": {
+    "duration_fast": "100ms",
+    "duration_base": "150ms",
+    "duration_slow": "200ms",
+    "duration_slowest": "300ms",
+    "easing_linear": "linear",
+    "easing_ease_in": "cubic-bezier(0.4, 0, 1, 1)",
+    "easing_ease_out": "cubic-bezier(0, 0, 0.2, 1)",
+    "easing_ease_in_out": "cubic-bezier(0.4, 0, 0.2, 1)"
+  },
+  "components": {
+    "button": {
+      "height_mobile": "48px",
+      "height_desktop": "44px",
+      "padding_x": "16px",
+      "padding_y": "12px",
+      "font_size": "14px",
+      "font_weight": "600",
+      "border_radius": "6px",
+      "transition": "all 150ms ease-out"
+    },
+    "input": {
+      "height": "44px",
+      "height_mobile": "48px",
+      "padding_x": "16px",
+      "padding_y": "12px",
+      "font_size": "16px",
+      "border_radius": "6px",
+      "border_width": "1px",
+      "focus_ring_width": "2px",
+      "focus_ring_offset": "2px"
+    },
+    "card": {
+      "padding_small": "12px",
+      "padding_default": "16px",
+      "padding_large": "24px",
+      "border_radius": "8px",
+      "border_width": "1px",
+      "gap_between_cards": "16px"
+    },
+    "badge": {
+      "padding_sm": "4px 8px",
+      "padding_lg": "8px 12px",
+      "font_size": "12px",
+      "font_weight": "500",
+      "border_radius_square": "4px",
+      "border_radius_pill": "12px"
+    },
+    "modal": {
+      "max_width_mobile": "90%",
+      "max_width_desktop": "600px",
+      "border_radius": "12px",
+      "padding": "24px",
+      "overlay_background": "rgba(0, 0, 0, 0.5)",
+      "z_index": 1000
+    },
+    "dropdown": {
+      "height": "44px",
+      "max_height_list": "calc(5 * 44px)",
+      "border_radius": "6px",
+      "padding": "12px 16px"
+    },
+    "tooltip": {
+      "max_width": "300px",
+      "padding": "8px 12px",
+      "font_size": "12px",
+      "border_radius": "4px",
+      "delay": "500ms",
+      "z_index": 999
+    }
+  },
+  "breakpoints": {
+    "mobile": "0px",
+    "mobile_max": "639px",
+    "tablet": "640px",
+    "tablet_max": "1023px",
+    "desktop": "1024px",
+    "desktop_lg": "1440px",
+    "desktop_xl": "1920px"
+  },
+  "layout": {
+    "sidebar_width_expanded": "280px",
+    "sidebar_width_collapsed": "60px",
+    "header_height": "64px",
+    "bottom_nav_height_mobile": "64px",
+    "max_content_width": "1920px",
+    "main_grid_columns_desktop": 12,
+    "main_grid_columns_tablet": 8,
+    "main_grid_columns_mobile": 1
+  },
+  "chart_dimensions": {
+    "candlestick_width_desktop": "800px",
+    "candlestick_height_desktop": "400px",
+    "candlestick_width_mobile": "100%",
+    "candlestick_height_mobile": "300px",
+    "indicator_height": "200px",
+    "pie_chart_size": "250px",
+    "sparkline_width": "80px",
+    "sparkline_height": "24px"
+  },
+  "touch_targets": {
+    "minimum_size": "44px",
+    "recommended_size": "48px",
+    "minimum_spacing": "8px",
+    "button_icon_size": "24px"
+  },
+  "contrast_ratios": {
+    "wcag_aa_text": "4.5:1",
+    "wcag_aa_ui": "3:1",
+    "wcag_aaa_text": "7:1",
+    "wcag_aaa_ui": "4.5:1",
+    "financial_critical": "7:1"
+  },
+  "semantic_colors": {
+    "gain": "{colors.light_mode.semantic.success.main}",
+    "gain_bg": "{colors.light_mode.semantic.success.light}",
+    "loss": "{colors.light_mode.semantic.danger.main}",
+    "loss_bg": "{colors.light_mode.semantic.danger.light}",
+    "bullish": "{colors.light_mode.semantic.success.main}",
+    "bearish": "{colors.light_mode.semantic.danger.main}",
+    "neutral": "{colors.light_mode.text.tertiary}",
+    "alert_positive": "{colors.light_mode.semantic.success.main}",
+    "alert_warning": "{colors.light_mode.semantic.warning.main}",
+    "alert_critical": "{colors.light_mode.semantic.danger.main}"
+  },
+  "implementation_notes": {
+    "color_system": "Dual light/dark mode support. Light mode is primary, dark mode follows Material Design principles.",
+    "typography": "Inter font family is preferred. System fonts as fallback for performance. All sizes scalable with 16px base.",
+    "spacing": "8px grid system. All spacing uses multiples of 4px for fine control.",
+    "accessibility": "All color combinations meet WCAG AA minimum. Critical financial data targets WCAG AAA.",
+    "responsive": "Mobile-first approach. Breakpoints at 640px (tablet) and 1024px (desktop). Tablet breakpoint at 768px optional.",
+    "animations": "Respect prefers-reduced-motion. Use easing functions consistently. Duration increases with movement distance.",
+    "components": "Reusable component library recommended. Storybook for documentation. Props for variant control.",
+    "dark_mode": "Toggle via theme provider. All colors have light/dark pairs. Test contrast in both modes."
+  }
+}
