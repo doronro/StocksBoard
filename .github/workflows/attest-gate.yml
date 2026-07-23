@@ -1,0 +1,76 @@
+# ────────────────────────────────────────────────────────────────────────────
+# Attest — compliance PR gate  (advisory · non-blocking)
+# Frameworks: HIPAA Security Rule (technical safeguards), GDPR (technical measures), SOC 2 (Security / Common Criteria), PCI DSS (code-visible requirements)
+# Project: Personal Diary
+# # Trigger: every pull request (opened / updated / reopened).
+#
+# Drop this file into .github/workflows/ and commit it to your default branch.
+# Each framework runs in parallel and posts its own PR comment.
+#
+# SECURITY: this file contains your Attest gate token below. That is fine for a
+# PRIVATE repository. For a PUBLIC repository, create an Actions secret named
+# ATTEST_TOKEN (Settings → Secrets and variables → Actions) and replace the token
+# value below with: ${{ secrets.ATTEST_TOKEN }}
+# ────────────────────────────────────────────────────────────────────────────
+name: Attest compliance check
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  attest:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        framework: [hipaa, gdpr, soc2, pci-dss]
+    steps:
+      - name: Run Attest compliance gate
+        env:
+          ATTEST_TOKEN: "att_live_fc8508999b40c762235e6f663ace390e4a681202"
+          ATTEST_API: "https://agentsincorporated.ai/api"
+          FRAMEWORK: ${{ matrix.framework }}
+          PROJECT_ID: "b9eeb350-655b-44b8-b080-e3c917d746d7"
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -uo pipefail
+          PR="${{ github.event.pull_request.number }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          HEAD_REF="${{ github.event.pull_request.head.ref }}"
+          BASE_REF="${{ github.event.pull_request.base.ref }}"
+          REPO="${{ github.repository }}"
+
+          echo "Attest: starting scan for PR #$PR ($FRAMEWORK)…"
+          START=$(curl -sS -X POST "$ATTEST_API/gate/scan" \
+            -H "X-Attest-Token: $ATTEST_TOKEN" -H "Content-Type: application/json" \
+            -d "{\"framework\":\"$FRAMEWORK\",\"projectId\":\"$PROJECT_ID\",\"headRef\":\"$HEAD_REF\",\"headSha\":\"$HEAD_SHA\",\"baseRef\":\"$BASE_REF\",\"prNumber\":$PR}")
+          SCAN_ID=$(echo "$START" | jq -r '.scanId // empty')
+          if [ -z "$SCAN_ID" ]; then echo "Attest: could not start scan (non-blocking): $START"; exit 0; fi
+
+          echo "Attest: scan $SCAN_ID running; waiting for results…"
+          RES=""
+          for i in $(seq 1 90); do
+            sleep 10
+            RES=$(curl -sS "$ATTEST_API/gate/scan/$SCAN_ID" -H "X-Attest-Token: $ATTEST_TOKEN")
+            if [ "$(echo "$RES" | jq -r '.completed // false')" = "true" ]; then break; fi
+          done
+
+          BODY=$(echo "$RES" | jq -r '.commentMarkdown // empty')
+          if [ -z "$BODY" ]; then echo "Attest: scan did not finish in time (non-blocking)."; exit 0; fi
+
+          MARKER="<!-- attest-gate:$FRAMEWORK -->"
+          printf '%s' "$BODY" > /tmp/attest-comment.md
+          EXISTING=$(gh api "repos/$REPO/issues/$PR/comments" --paginate \
+            --jq "map(select(.body | contains(\"$MARKER\"))) | .[0].id // empty" 2>/dev/null || echo "")
+          if [ -n "$EXISTING" ]; then
+            gh api -X PATCH "repos/$REPO/issues/comments/$EXISTING" -F body=@/tmp/attest-comment.md >/dev/null \
+              && echo "Attest: updated existing comment."
+          else
+            gh api -X POST "repos/$REPO/issues/$PR/comments" -F body=@/tmp/attest-comment.md >/dev/null \
+              && echo "Attest: posted comment."
+          fi
+          echo "Attest: gate complete (advisory)."
