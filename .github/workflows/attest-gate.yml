@@ -1,7 +1,7 @@
 # ────────────────────────────────────────────────────────────────────────────
 # Attest — compliance PR gate  (advisory · non-blocking)
-# Frameworks: HIPAA Security Rule (technical safeguards), GDPR (technical measures), SOC 2 (Security / Common Criteria), PCI DSS (code-visible requirements)
-# Project: Personal Diary
+# Frameworks: GDPR (technical measures), SOC 2 (Security / Common Criteria), PCI DSS (code-visible requirements), HIPAA Security Rule (technical safeguards)
+# Project: Stock Board
 # # Trigger: every pull request (opened / updated / reopened).
 #
 # Drop this file into .github/workflows/ and commit it to your default branch.
@@ -27,14 +27,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        framework: [hipaa, gdpr, soc2, pci-dss]
+        framework: [gdpr, soc2, pci-dss, hipaa]
     steps:
       - name: Run Attest compliance gate
         env:
           ATTEST_TOKEN: "att_live_fc8508999b40c762235e6f663ace390e4a681202"
           ATTEST_API: "https://agentsincorporated.ai/api"
           FRAMEWORK: ${{ matrix.framework }}
-          PROJECT_ID: "b9eeb350-655b-44b8-b080-e3c917d746d7"
+          PROJECT_ID: "1cc05566-7061-4d97-812c-8fea11169d9e"
           GH_TOKEN: ${{ github.token }}
         run: |
           set -uo pipefail
