@@ -1,11 +1,15 @@
 # ────────────────────────────────────────────────────────────────────────────
 # Attest — compliance PR gate  (advisory · non-blocking)
-# Frameworks: GDPR (technical measures), SOC 2 (Security / Common Criteria), PCI DSS (code-visible requirements), HIPAA Security Rule (technical safeguards)
+# Frameworks: HIPAA Security Rule (technical safeguards)
 # Project: Stock Board
-# # Trigger: every pull request (opened / updated / reopened).
+# # Trigger: every pull request (opened / updated / reopened) + a baseline scan on every push to main/master.
 #
 # Drop this file into .github/workflows/ and commit it to your default branch.
-# Each framework runs in parallel and posts its own PR comment.
+# Each framework posts its own PR comment.
+#
+# BASELINE: the gate scans your base branch on each push to main/master, so a PR
+# can show ONLY what it changed (fixed / newly introduced) — not your whole backlog.
+# If your default branch isn't main or master, edit the "push: branches" list below.
 #
 # SECURITY: this file contains your Attest gate token below. That is fine for a
 # PRIVATE repository. For a PUBLIC repository, create an Actions secret named
@@ -16,6 +20,8 @@ name: Attest compliance check
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+  push:
+    branches: [main, master]
 
 permissions:
   pull-requests: write
@@ -26,8 +32,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+      # One framework at a time: each scan is a full repo read, so serializing keeps them
+      # from starving each other. Raise this once the backend has more headroom.
+      max-parallel: 1
       matrix:
-        framework: [gdpr, soc2, pci-dss, hipaa]
+        framework: [hipaa]
     steps:
       - name: Run Attest compliance gate
         env:
@@ -38,6 +47,16 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -uo pipefail
+          # Baseline pass: on a push to the base branch (a merge), scan it so future PRs have a
+          # reference to diff against. There's no PR here — just record the baseline, no comment.
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            echo "Attest: baseline scan for $GITHUB_REF_NAME ($FRAMEWORK)…"
+            curl -sS -X POST "$ATTEST_API/gate/scan" \
+              -H "X-Attest-Token: $ATTEST_TOKEN" -H "Content-Type: application/json" \
+              -d "{\"framework\":\"$FRAMEWORK\",\"projectId\":\"$PROJECT_ID\",\"headRef\":\"$GITHUB_REF_NAME\",\"headSha\":\"$GITHUB_SHA\",\"baseRef\":\"$GITHUB_REF_NAME\"}" >/dev/null \
+              && echo "Attest: baseline scan started for $GITHUB_REF_NAME (no PR comment)."
+            exit 0
+          fi
           PR="${{ github.event.pull_request.number }}"
           HEAD_SHA="${{ github.event.pull_request.head.sha }}"
           HEAD_REF="${{ github.event.pull_request.head.ref }}"
@@ -52,15 +71,21 @@ jobs:
           if [ -z "$SCAN_ID" ]; then echo "Attest: could not start scan (non-blocking): $START"; exit 0; fi
 
           echo "Attest: scan $SCAN_ID running; waiting for results…"
-          RES=""
-          for i in $(seq 1 90); do
+          RES=""; STATUS=""
+          for i in $(seq 1 138); do   # ~23 min, covers the 20-min server-side AI ceiling
             sleep 10
             RES=$(curl -sS "$ATTEST_API/gate/scan/$SCAN_ID" -H "X-Attest-Token: $ATTEST_TOKEN")
-            if [ "$(echo "$RES" | jq -r '.completed // false')" = "true" ]; then break; fi
+            [ "$(echo "$RES" | jq -r '.completed // false')" = "true" ] && break
+            STATUS=$(echo "$RES" | jq -r '.status // ""')
+            case "$STATUS" in Failed|Cancelled|Stopped) break;; esac
           done
 
           BODY=$(echo "$RES" | jq -r '.commentMarkdown // empty')
-          if [ -z "$BODY" ]; then echo "Attest: scan did not finish in time (non-blocking)."; exit 0; fi
+          if [ -z "$BODY" ]; then
+            ERR=$(echo "$RES" | jq -r '.error // "The scan did not finish in time."')
+            echo "Attest: scan did not complete — $ERR"
+            BODY=$(printf '## 🛡️ Attest — %s compliance check\n\n> ⚠️ The scan could not complete: %s\n\n<sub>Advisory · Attest · this comment updates on the next run.</sub>\n<!-- attest-gate:%s -->' "$FRAMEWORK" "$ERR" "$FRAMEWORK")
+          fi
 
           MARKER="<!-- attest-gate:$FRAMEWORK -->"
           printf '%s' "$BODY" > /tmp/attest-comment.md
