@@ -1,8 +1,8 @@
 # ────────────────────────────────────────────────────────────────────────────
 # Attest — compliance PR gate  (advisory · non-blocking)
-# Frameworks: HIPAA Security Rule (technical safeguards)
+# Frameworks: 21st Century Cures Act — Information Blocking / ONC API, California Utility Customer Data Privacy (SB 1476), Debt Collection Rule / FDCPA (Regulation F)
 # Project: Stock Board
-# # Trigger: every pull request (opened / updated / reopened) + a baseline scan on every push to main/master.
+# Trigger: pull requests labelled 'attest' (re-add to re-run) + a baseline scan on every push to main/master.
 #
 # Drop this file into .github/workflows/ and commit it to your default branch.
 # Each framework posts its own PR comment.
@@ -19,7 +19,7 @@
 name: Attest compliance check
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [labeled]
   push:
     branches: [main, master]
 
@@ -29,6 +29,7 @@ permissions:
 
 jobs:
   attest:
+    if: github.event_name == 'push' || github.event.label.name == 'attest'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -36,14 +37,14 @@ jobs:
       # from starving each other. Raise this once the backend has more headroom.
       max-parallel: 1
       matrix:
-        framework: [hipaa]
+        framework: [onc-cures, ca-sb1476, reg-f]
     steps:
       - name: Run Attest compliance gate
         env:
-          ATTEST_TOKEN: "att_live_fc8508999b40c762235e6f663ace390e4a681202"
+          ATTEST_TOKEN: ${{ secrets.ATTEST_TOKEN }}
           ATTEST_API: "https://agentsincorporated.ai/api"
           FRAMEWORK: ${{ matrix.framework }}
-          PROJECT_ID: "1cc05566-7061-4d97-812c-8fea11169d9e"
+          PROJECT_ID: "e0b97ce3-2299-4b3e-a77a-8660fd940986"
           GH_TOKEN: ${{ github.token }}
         run: |
           set -uo pipefail
