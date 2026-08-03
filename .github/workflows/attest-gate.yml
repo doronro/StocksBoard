@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────────
 # Attest — compliance PR gate  (advisory · non-blocking)
-# Frameworks: 21st Century Cures Act — Information Blocking / ONC API, California Utility Customer Data Privacy (SB 1476), Debt Collection Rule / FDCPA (Regulation F)
+# Frameworks: 21st Century Cures Act — Information Blocking / ONC API, CFPB Personal Financial Data Rights (§1033), CSA Cloud Controls Matrix
 # Project: Stock Board
 # Trigger: pull requests labelled 'attest' (re-add to re-run) + a baseline scan on every push to main/master.
 #
@@ -37,7 +37,7 @@ jobs:
       # from starving each other. Raise this once the backend has more headroom.
       max-parallel: 1
       matrix:
-        framework: [onc-cures, ca-sb1476, reg-f]
+        framework: [onc-cures, cfpb-1033, csa-ccm]
     steps:
       - name: Run Attest compliance gate
         env:
